@@ -24,7 +24,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="280dp"
-
         android:layout_marginTop="20dp"
         android:text="Logout" />
 
@@ -54,6 +53,20 @@
         android:paddingRight="30dp"
         android:onClick="buttonReset"
         android:text="Reset" />
+
+    <Button
+        android:id="@+id/buttonSync"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/buttonProfil"
+        android:layout_alignParentEnd="true"
+        android:layout_marginLeft="30dp"
+        android:layout_marginTop="66dp"
+        android:layout_marginEnd="152dp"
+        android:onClick="buttonSync"
+        android:paddingLeft="30dp"
+        android:paddingRight="30dp"
+        android:text="Sync" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="200dp"
@@ -88,7 +101,7 @@
         android:id="@+id/buttonInput"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp"
+        android:layout_marginLeft="30dp"
         android:layout_marginTop="120dp"
         android:onClick="buttonAdd"
         android:text="Submit" />

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "671064270376",
+    "firebase_url": "https://cableandroid-e6c98-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "cableandroid-e6c98",
+    "storage_bucket": "cableandroid-e6c98.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:671064270376:android:6bda839f3b7b1acd2f771d",
+        "android_client_info": {
+          "package_name": "com.example.loginfirebaseee"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "671064270376-gu07o94fojmkm42vrondn1eju2i1n7ks.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYd9-Fyu5ZrkO03ylbSaoSxEIQ8OKaPTQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "671064270376-gu07o94fojmkm42vrondn1eju2i1n7ks.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

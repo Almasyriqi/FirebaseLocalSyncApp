@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">LoginFirebaseee</string>
+    <string name="login">Login</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="Email">Email</string>
+    <string name="register">Register</string>
+    <string name="click_to_login">Click to Login</string>
+    <string name="logout">logout</string>
+    <string name="link"><a href="https://wa.me/+6289501044090">Forgot Password</a></string>
+
+</resources>

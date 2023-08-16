@@ -18,14 +18,20 @@ public class InputData {
     private String data_Data;
     @ColumnInfo(name = "timestamp")
     private long timestamp;
+    @ColumnInfo(name = "latitude")
+    private double latitude;
+    @ColumnInfo(name = "longitude")
+    private double longitude;
 
     public InputData(){
 
     }
-    public InputData(String dataId, String dataData){
+    public InputData(String dataId, String dataData, double latitude, double longitude){
         this.data_Id = dataId;
         this.data_Data = dataData;
         this.timestamp = System.currentTimeMillis();
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public void setData_Id(String data_Id) {
@@ -38,6 +44,22 @@ public class InputData {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public double getLatitude() {
+        return latitude;
     }
 
     public String getData_Id() {

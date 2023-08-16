@@ -3,8 +3,11 @@ package com.example.loginfirebaseee;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.content.DialogInterface;
@@ -17,7 +20,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ProgressBar;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference databaseInputData;
     private ListView listViewData;
     private List<InputData> listData;
+    private LocationManager locationManager;
+    private LocationListener locationListener;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
     FirebaseAuth auth;
     Button button, buttonProfil;
     TextView textView;
@@ -52,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     AppDatabase databaseLocal;
     DataDao dataDao;
     List<InputData> temporaryLocal;
+    double latitude, longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +115,67 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(profil);
             }
         });
+
+        // setup untuk mendapatkan data lokasi
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
+
+                // Lakukan sesuatu dengan data latitude dan longitude di sini
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            @Override
+            public void onProviderEnabled(String provider) {}
+
+            @Override
+            public void onProviderDisabled(String provider) {}
+        };
+
+        // Meminta izin lokasi pada runtime jika belum diberikan
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            startLocationUpdates();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startLocationUpdates();
+            }
+        }
+    }
+
+    private void startLocationUpdates() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            // Meminta pembaruan lokasi dari layanan GPS
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+
+            // Atau meminta pembaruan lokasi dari layanan jaringan (NETWORK_PROVIDER)
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Hentikan pembaruan lokasi saat aplikasi di-pause
+        locationManager.removeUpdates(locationListener);
     }
 
     private class LoadDataAsyncTask extends AsyncTask<Void, Void, List<InputData>> {
@@ -144,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
         if (!TextUtils.isEmpty(data)) {
             String id = UUID.randomUUID().toString();
             long timestamp = System.currentTimeMillis();
-            InputData inputData = new InputData(id, data);
+            InputData inputData = new InputData(id, data, latitude, longitude);
 
             // Menjalankan operasi database local di thread terpisah
             new InsertDataAsyncTask().execute(inputData);

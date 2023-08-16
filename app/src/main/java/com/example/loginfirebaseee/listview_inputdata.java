@@ -22,9 +22,13 @@ public class listview_inputdata extends ArrayAdapter {
         LayoutInflater inflater = context.getLayoutInflater();
         View listViewItem = inflater.inflate(R.layout.layout_listview, null, true);
         TextView textViewData = listViewItem.findViewById(R.id.textViewMeter);
+        TextView textViewLatitude = listViewItem.findViewById(R.id.textViewLatitude);
+        TextView textViewLongitude = listViewItem.findViewById(R.id.textViewLongitude);
         TextView textViewData2 = listViewItem.findViewById(R.id.textViewWaktu);
         InputData inputData = list_inputdata.get(position);
         textViewData.setText("Panjang (m) : "+inputData.getData_Data());
+        textViewLatitude.setText("Latitude : " + String.valueOf(inputData.getLatitude()));
+        textViewLongitude.setText("Longitude : " + String.valueOf(inputData.getLongitude()));
         textViewData2.setText("Timestamp : " + inputData.getFormattedTimestamp());
         return listViewItem;
     }

@@ -14,6 +14,7 @@ import android.net.NetworkInfo;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.TextUtils;
@@ -29,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.UUID;
 import java.util.Collections;
 
@@ -41,6 +43,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import java.util.concurrent.Executors;
 import java.util.ArrayList;
@@ -70,12 +78,15 @@ public class MainActivity extends AppCompatActivity {
     DataDao dataDao;
     List<InputData> temporaryLocal;
     double latitude, longitude;
-    ExcelExporter excelExporter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        System.setProperty("org.apache.poi.javax.xml.stream.XMLInputFactory", "com.fasterxml.aalto.stax.InputFactoryImpl");
+        System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
+        System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 
         // instansiasi object dan find view by id
         listViewData = findViewById(R.id.listView_Data);
@@ -85,7 +96,6 @@ public class MainActivity extends AppCompatActivity {
         button = findViewById(R.id.logout);
         buttonProfil = findViewById(R.id.buttonProfil);
         textView = findViewById(R.id.user_details);
-        excelExporter = new ExcelExporter();
 
         //memanggil instansi dari firebase dan dimasukkan ke variabel Data
         databaseInputData = FirebaseDatabase.getInstance().getReference("Data");
@@ -111,10 +121,35 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                Intent intent = new Intent(getApplicationContext(), Login.class);
-                startActivity(intent);
-                finish();
+                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                builder.setTitle("Konfirmasi Logout");
+                builder.setMessage("Apakah Anda yakin untuk logout?");
+
+                builder.setPositiveButton("Ya", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(isInternetConnected() == true){
+                            FirebaseAuth.getInstance().signOut();
+                            Intent intent = new Intent(getApplicationContext(), Login.class);
+                            startActivity(intent);
+                            finish();
+                            Toast.makeText(MainActivity.this, "Berhasil logout", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Gagal logout dikarenakan tidak ada internet", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+                builder.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Tutup dialog jika pengguna memilih "Batal"
+                        dialog.dismiss();
+                    }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
             }
         });
 
@@ -155,10 +190,6 @@ public class MainActivity extends AppCompatActivity {
         // Meminta izin lokasi pada runtime jika belum diberikan
         if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
-        }
-
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
         }
 
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -368,22 +399,110 @@ public class MainActivity extends AppCompatActivity {
     // fungsi untuk export data ke excel
     public void buttonExport(View view){
         if(isInternetConnected() == true){
-            Executors.newSingleThreadExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    String fileName = String.valueOf(System.currentTimeMillis()) + "-export-data.xlsx";
-                    File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-                    if(!downloadsDir.exists()){
-                        downloadsDir.mkdirs();
-                    }
-                    String filePath = new File(downloadsDir, fileName).getAbsolutePath();
-                    Log.i("PATH", filePath);
-                    excelExporter.exportToExcel(listData, filePath);
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
+                if (getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                    String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                    requestPermissions(permissions, 1);
+                } else {
+                    createXlFile();
                 }
-            });
+            } else {
+                createXlFile();
+            }
             Toast.makeText(MainActivity.this, "Berhasil export data", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(MainActivity.this, "Tidak dapat export data tanpa internet", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void createXlFile() {
+        if (listData.size() > 0){
+            Workbook wb = new HSSFWorkbook();
+            Cell cell = null;
+            Sheet sheet = null;
+            sheet = wb.createSheet("Data");
+            Row row = sheet.createRow(0);
+
+            cell = row.createCell(0);
+            cell.setCellValue("ID");
+
+            cell = row.createCell(1);
+            cell.setCellValue("Panjang (m)");
+
+            cell = row.createCell(2);
+            cell.setCellValue("User");
+
+            cell = row.createCell(3);
+            cell.setCellValue("Latitude");
+
+            cell = row.createCell(4);
+            cell.setCellValue("Longitude");
+
+            cell = row.createCell(5);
+            cell.setCellValue("Timestamp");
+
+            //column width
+            sheet.setColumnWidth(0, (50 * 200));
+            sheet.setColumnWidth(1, (20 * 200));
+            sheet.setColumnWidth(2, (30 * 200));
+            sheet.setColumnWidth(3, (30 * 200));
+            sheet.setColumnWidth(4, (30 * 200));
+            sheet.setColumnWidth(5, (30 * 200));
+
+
+            for (int i = 0; i < listData.size(); i++) {
+                Row row1 = sheet.createRow(i + 1);
+
+                cell = row1.createCell(0);
+                cell.setCellValue(listData.get(i).getData_Id());
+
+                cell = row1.createCell(1);
+                cell.setCellValue((listData.get(i).getData_Data()));
+
+                cell = row1.createCell(2);
+                cell.setCellValue((listData.get(i).getUser_email()));
+
+                cell = row1.createCell(3);
+                cell.setCellValue((listData.get(i).getLatitude()));
+
+                cell = row1.createCell(4);
+                cell.setCellValue((listData.get(i).getLongitude()));
+
+                cell = row1.createCell(5);
+                cell.setCellValue(listData.get(i).getFormattedTimestamp());
+
+                sheet.setColumnWidth(0, (50 * 200));
+                sheet.setColumnWidth(1, (20 * 200));
+                sheet.setColumnWidth(2, (30 * 200));
+                sheet.setColumnWidth(3, (30 * 200));
+                sheet.setColumnWidth(4, (30 * 200));
+                sheet.setColumnWidth(5, (30 * 200));
+
+            }
+            String fileName = String.valueOf(System.currentTimeMillis()) + "-export-data.xlsx";
+            File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            String path = new File(downloadsDir, fileName).getAbsolutePath();
+
+            FileOutputStream outputStream = null;
+
+            try {
+                outputStream = new FileOutputStream(path);
+                wb.write(outputStream);
+                // ShareViaEmail(file.getParentFile().getName(),file.getName());
+                Toast.makeText(getApplicationContext(), "Excel Created in " + path, Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+
+                Toast.makeText(getApplicationContext(), "Not OK", Toast.LENGTH_LONG).show();
+                try {
+                    outputStream.close();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+
+                }
+            }
+        } else {
+            Toast.makeText(MainActivity.this, "Tidak dapat export data dikarenakan data kosong", Toast.LENGTH_SHORT).show();
         }
     }
 

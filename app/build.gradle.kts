@@ -43,6 +43,15 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
+    // dependency room
     implementation("androidx.room:room-runtime:2.5.2")
     annotationProcessor("androidx.room:room-compiler:2.5.2")
+
+    // dependency export excel
+    implementation("org.apache.poi:poi:4.0.0")
+    implementation("org.apache.poi:poi-ooxml:4.0.0")
+    implementation("net.sourceforge.jexcelapi:jxl:2.6.12")
+    implementation("javax.xml.stream:stax-api:1.0")
+    implementation("com.fasterxml:aalto-xml:1.2.2")
+    implementation("org.apache.xmlbeans:xmlbeans:3.1.0")
 }

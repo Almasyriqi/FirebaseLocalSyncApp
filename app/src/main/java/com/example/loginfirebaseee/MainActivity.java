@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
@@ -14,6 +15,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -26,6 +28,7 @@ import android.location.LocationManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.UUID;
 import java.util.Collections;
 
@@ -40,9 +43,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.concurrent.Executors;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
+
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private LocationListener locationListener;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final String SERVER_IP = "192.168.0.4"; // Ganti dengan alamat IP server
+    private static final int SERVER_PORT = 12345;
     FirebaseAuth auth;
     Button button, buttonProfil;
     TextView textView;
@@ -61,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     DataDao dataDao;
     List<InputData> temporaryLocal;
     double latitude, longitude;
+    ExcelExporter excelExporter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
         button = findViewById(R.id.logout);
         buttonProfil = findViewById(R.id.buttonProfil);
         textView = findViewById(R.id.user_details);
+        excelExporter = new ExcelExporter();
 
         //memanggil instansi dari firebase dan dimasukkan ke variabel Data
         databaseInputData = FirebaseDatabase.getInstance().getReference("Data");
@@ -129,16 +140,27 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
 
             @Override
-            public void onProviderEnabled(String provider) {}
+            public void onProviderEnabled(String provider) {
+            }
 
             @Override
-            public void onProviderDisabled(String provider) {}
+            public void onProviderDisabled(String provider) {
+            }
         };
 
         // Meminta izin lokasi pada runtime jika belum diberikan
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+        }
+
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
+        }
+
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -186,9 +208,9 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<InputData> inputData) {
-            listData.clear();
-            listData = inputData;
-            setDataListView();
+            temporaryLocal.clear();
+            temporaryLocal = inputData;
+            setDataListView(temporaryLocal);
         }
     }
 
@@ -203,18 +225,18 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             // Setelah data berhasil diinsert, kita bisa melakukan operasi lainnya
             editTextInput.setText("");
-            updateListView();
+            if(isInternetConnected() == false){
+                updateListView();
+            }
         }
     }
 
     // fungsi untuk menambah data
     public void buttonAdd(View view) {
         String data = editTextInput.getText().toString();
-
         if (!TextUtils.isEmpty(data)) {
             String id = UUID.randomUUID().toString();
-            long timestamp = System.currentTimeMillis();
-            InputData inputData = new InputData(id, data, latitude, longitude);
+            InputData inputData = new InputData(id, data, latitude, longitude, user.getEmail());
 
             // Menjalankan operasi database local di thread terpisah
             new InsertDataAsyncTask().execute(inputData);
@@ -236,6 +258,23 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
 
+            // mengirim data ke alat melalui socket jika tidak ada internet
+            if (isInternetConnected() == false) {
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+                            OutputStream outputStream = socket.getOutputStream();
+                            outputStream.write(data.getBytes());
+                            outputStream.close();
+                            socket.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
         } else {
             Toast.makeText(this, "Data wajib diisi", Toast.LENGTH_SHORT).show();
         }
@@ -290,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
                     temporaryLocal.clear();
                     temporaryLocal = dataDao.getAllData();
                     Log.i("TOTAL", String.valueOf(temporaryLocal.size()));
+                    // sinkronasi firebase dengan room (room menjadi patokan)
                     for (InputData local : temporaryLocal) {
                         boolean found = false;
                         for (InputData fb : listData) {
@@ -303,11 +343,47 @@ public class MainActivity extends AppCompatActivity {
                             databaseInputData.child(local.getData_Id()).setValue(local);
                         }
                     }
+                    // sinkronasi room dengan firebase (firebase menjadi patokan)
+                    for(InputData fb : listData){
+                        boolean found = false;
+                        for(InputData local : temporaryLocal){
+                            if(fb.getData_Id().equals(local.getData_Id())){
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(found == false){
+                            Log.i("SYNC", "ID : " + fb.getData_Id() + " tidak ada pada room");
+                            dataDao.insert(fb);
+                        }
+                    }
                 }
             });
             Toast.makeText(MainActivity.this, "Sinkronasi data berhasil", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(MainActivity.this, "Sinkronasi data gagal dikarenakan tidak terdapat koneksi internet", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // fungsi untuk export data ke excel
+    public void buttonExport(View view){
+        if(isInternetConnected() == true){
+            Executors.newSingleThreadExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    String fileName = String.valueOf(System.currentTimeMillis()) + "-export-data.xlsx";
+                    File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                    if(!downloadsDir.exists()){
+                        downloadsDir.mkdirs();
+                    }
+                    String filePath = new File(downloadsDir, fileName).getAbsolutePath();
+                    Log.i("PATH", filePath);
+                    excelExporter.exportToExcel(listData, filePath);
+                }
+            });
+            Toast.makeText(MainActivity.this, "Berhasil export data", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(MainActivity.this, "Tidak dapat export data tanpa internet", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -325,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
                         listData.add(inputData);
                     }
                     //menampilkan list yang berisi data dari firebase ke dalam listview
-                    setDataListView();
+                    setDataListView(listData);
                 }
 
                 @Override
@@ -338,7 +414,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void setDataListView(){
+    public void setDataListView(List<InputData> listData) {
         Collections.sort(listData, new InputDataTimestampComparator());
         listview_inputdata inputDataList_Adapter = new listview_inputdata(MainActivity.this, listData);
         listViewData.setAdapter(inputDataList_Adapter);

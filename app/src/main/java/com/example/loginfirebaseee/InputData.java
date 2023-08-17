@@ -22,16 +22,19 @@ public class InputData {
     private double latitude;
     @ColumnInfo(name = "longitude")
     private double longitude;
+    @ColumnInfo(name = "user_email")
+    private String user_email;
 
     public InputData(){
 
     }
-    public InputData(String dataId, String dataData, double latitude, double longitude){
+    public InputData(String dataId, String dataData, double latitude, double longitude, String email){
         this.data_Id = dataId;
         this.data_Data = dataData;
         this.timestamp = System.currentTimeMillis();
         this.latitude = latitude;
         this.longitude = longitude;
+        this.user_email = email;
     }
 
     public void setData_Id(String data_Id) {
@@ -52,6 +55,14 @@ public class InputData {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
+    }
+
+    public void setUser_email(String user_email) {
+        this.user_email = user_email;
+    }
+
+    public String getUser_email() {
+        return user_email;
     }
 
     public double getLongitude() {

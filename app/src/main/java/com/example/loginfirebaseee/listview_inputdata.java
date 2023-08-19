@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
 
 public class listview_inputdata extends ArrayAdapter {
@@ -22,16 +24,16 @@ public class listview_inputdata extends ArrayAdapter {
         LayoutInflater inflater = context.getLayoutInflater();
         View listViewItem = inflater.inflate(R.layout.layout_listview, null, true);
         TextView textViewData = listViewItem.findViewById(R.id.textViewMeter);
+        TextView textViewData2 = listViewItem.findViewById(R.id.textViewWaktu);
+        TextView textViewData3 = listViewItem.findViewById(R.id.textViewEmail);
         TextView textViewLatitude = listViewItem.findViewById(R.id.textViewLatitude);
         TextView textViewLongitude = listViewItem.findViewById(R.id.textViewLongitude);
-        TextView textViewEmail = listViewItem.findViewById(R.id.textViewEmail);
-        TextView textViewData2 = listViewItem.findViewById(R.id.textViewWaktu);
         InputData inputData = list_inputdata.get(position);
-        textViewData.setText("Panjang (m) : "+inputData.getData_Data());
-        textViewLatitude.setText("Latitude : " + String.valueOf(inputData.getLatitude()));
-        textViewLongitude.setText("Longitude : " + String.valueOf(inputData.getLongitude()));
-        textViewEmail.setText("User : " + inputData.getUser_email());
-        textViewData2.setText("Timestamp : " + inputData.getFormattedTimestamp());
+        textViewData.setText("Data (meter) :  " + inputData.getData_Data());
+        textViewData2.setText("Timestamp : "+ inputData.getFormattedTimestamp());
+        textViewData3.setText("User : "+ inputData.getUserId());
+        textViewLatitude.setText("Latitude : "+String.valueOf(inputData.getLatitude()));
+        textViewLongitude.setText("Latitude : "+ String.valueOf(inputData.getLongitude()));
         return listViewItem;
     }
 

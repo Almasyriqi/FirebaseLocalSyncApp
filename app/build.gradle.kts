@@ -39,19 +39,12 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.google.firebase:firebase-auth-ktx:22.1.1")
     implementation("com.google.firebase:firebase-database-ktx:20.2.2")
+    implementation ("androidx.room:room-runtime:2.5.0")
+    annotationProcessor ("androidx.room:room-compiler:2.5.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-    // dependency room
-    implementation("androidx.room:room-runtime:2.5.2")
-    annotationProcessor("androidx.room:room-compiler:2.5.2")
-
-    // dependency export excel
     implementation("org.apache.poi:poi:4.0.0")
     implementation("org.apache.poi:poi-ooxml:4.0.0")
-    implementation("net.sourceforge.jexcelapi:jxl:2.6.12")
-    implementation("javax.xml.stream:stax-api:1.0")
-    implementation("com.fasterxml:aalto-xml:1.2.2")
-    implementation("org.apache.xmlbeans:xmlbeans:3.1.0")
 }

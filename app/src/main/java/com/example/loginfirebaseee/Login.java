@@ -28,7 +28,7 @@ public class Login extends AppCompatActivity {
     TextView textView;
     TextView linkForget;
 
-    //Firebase docs Periksa apakah pengguna masuk (non-null) dan perbarui UI yang sesuai
+
     @Override
     public void onStart() {
         super.onStart();
@@ -61,7 +61,7 @@ public class Login extends AppCompatActivity {
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(),Register.class);
                 startActivity(intent);
-                finish();
+
             }
         });
 
@@ -82,7 +82,7 @@ public class Login extends AppCompatActivity {
                     return;
                 }
 
-                //firebase docs Ketika pengguna login ke aplikasi, teruskan alamat email dan sandi pengguna ke firebase
+                //firebase docs/library untuk memanggil akses akun yang telah terdaftar pada firebase auth
                 mAuth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                             @Override
@@ -94,7 +94,7 @@ public class Login extends AppCompatActivity {
                                     startActivity(intent);
                                     finish();
                                 } else {
-                                    Toast.makeText(Login.this, "Authentication failed.",
+                                    Toast.makeText(Login.this, "Username atau password salah",
                                             Toast.LENGTH_SHORT).show();
 
                                 }

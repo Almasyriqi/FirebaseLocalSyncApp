@@ -54,18 +54,18 @@ public class Register extends AppCompatActivity {
         editTextPassword = findViewById(R.id.password);
         buttonRegister = findViewById(R.id.buttonRegister);
         progressBar = findViewById(R.id.progressBar);
-        textView = findViewById(R.id.loginnow);
+//        textView = findViewById(R.id.loginnow);
 
 
-        //fungsi agar bisa di klik tulisan "click to login"
-        textView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(),MainActivity.class);
-                startActivity(intent);
-                finish();
-            }
-        });
+//        //fungsi agar bisa di klik tulisan "click to login"
+//        textView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+//                startActivity(intent);
+//                finish();
+//            }
+//        });
 
 
         buttonRegister.setOnClickListener(new View.OnClickListener() {
@@ -89,13 +89,16 @@ public class Register extends AppCompatActivity {
                     return;
                 }
 
-                //firebase docs Ketika pengguna login ke aplikasi, teruskan alamat email dan sandi pengguna ke firebase
+                //firebase docs/library buat akun baru dengan meneruskan email dan password pengguna ke createUserWithEmailAndPassword
                 mAuth.createUserWithEmailAndPassword(email, password)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 progressBar.setVisibility(View.GONE);
                                 if (task.isSuccessful()) {
+                                    Intent intent = new Intent(getApplicationContext(),MainActivity.class);
+                                    startActivity(intent);
+                                    finish();
 
                                     Toast.makeText(Register.this, "Account Created",
                                             Toast.LENGTH_SHORT).show();

@@ -8,11 +8,14 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,18 +26,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.UUID;
-import java.util.Collections;
-
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -42,6 +35,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -50,14 +44,14 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import java.util.concurrent.Executors;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -68,43 +62,48 @@ public class MainActivity extends AppCompatActivity {
     private LocationManager locationManager;
     private LocationListener locationListener;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
-    private static final String SERVER_IP = "192.168.0.4"; // Ganti dengan alamat IP server
-    private static final int SERVER_PORT = 12345;
-    FirebaseAuth auth;
-    Button button, buttonProfil;
-    TextView textView;
-    FirebaseUser user;
+
     AppDatabase databaseLocal;
     DataDao dataDao;
+
     List<InputData> temporaryLocal;
+
     double latitude, longitude;
+    FirebaseAuth auth;
+    Button button, buttonProfil, buttonReset;
+    TextView textView;
+    FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // set property export excel
         System.setProperty("org.apache.poi.javax.xml.stream.XMLInputFactory", "com.fasterxml.aalto.stax.InputFactoryImpl");
         System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
         System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 
-        // instansiasi object dan find view by id
+        // find view by id
         listViewData = findViewById(R.id.listView_Data);
-        listData = new ArrayList<>();
-        temporaryLocal = new ArrayList<>();
         editTextInput = findViewById(R.id.editTextInput);
         button = findViewById(R.id.logout);
         buttonProfil = findViewById(R.id.buttonProfil);
+        buttonReset = findViewById(R.id.buttonReset);
         textView = findViewById(R.id.user_details);
+
+        // instansiasi object
+        listData = new ArrayList<>();
+        temporaryLocal = new ArrayList<>();
+
+        // instansiasi database lokal room
+        databaseLocal = AppDatabase.getInstance(this);
+        dataDao = databaseLocal.dataDao();
 
         //memanggil instansi dari firebase dan dimasukkan ke variabel Data
         databaseInputData = FirebaseDatabase.getInstance().getReference("Data");
 
-        // database lokal room
-        databaseLocal = AppDatabase.getInstance(this);
-        dataDao = databaseLocal.dataDao();
-
-        // mendapatkan data user yang login
+        // get current user firebase
         auth = FirebaseAuth.getInstance();
         user = auth.getCurrentUser();
 
@@ -114,29 +113,29 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         } else {
-            textView.setText(user.getEmail());
+            textView.setText("Welcome " + user.getEmail());
         }
 
-        // button untuk logout
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                 builder.setTitle("Konfirmasi Logout");
-                builder.setMessage("Apakah Anda yakin untuk logout?");
+                builder.setMessage("Apakah Anda yakin ingin logout?");
 
                 builder.setPositiveButton("Ya", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(isInternetConnected() == true){
+                        if (isInternetConnected()==true){
                             FirebaseAuth.getInstance().signOut();
                             Intent intent = new Intent(getApplicationContext(), Login.class);
                             startActivity(intent);
                             finish();
                             Toast.makeText(MainActivity.this, "Berhasil logout", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Gagal logout dikarenakan tidak ada internet", Toast.LENGTH_SHORT).show();
+                        }else {
+                            Toast.makeText(MainActivity.this, "Gagal logout, tidak ada internet", Toast.LENGTH_SHORT).show();
                         }
+
                     }
                 });
 
@@ -147,24 +146,22 @@ public class MainActivity extends AppCompatActivity {
                         dialog.dismiss();
                     }
                 });
-
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
         });
 
-        // button untuk ke halaman profil
         buttonProfil.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent profil = new Intent(getApplicationContext(), Profil.class);
                 startActivity(profil);
+//                finish();
             }
         });
 
         // setup untuk mendapatkan data lokasi
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
         locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -175,23 +172,16 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-            }
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
 
             @Override
-            public void onProviderEnabled(String provider) {
-            }
+            public void onProviderEnabled(String provider) {}
 
             @Override
-            public void onProviderDisabled(String provider) {
-            }
+            public void onProviderDisabled(String provider) {}
         };
 
         // Meminta izin lokasi pada runtime jika belum diberikan
-        if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
-        }
-
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -256,63 +246,40 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             // Setelah data berhasil diinsert, kita bisa melakukan operasi lainnya
             editTextInput.setText("");
-            if(isInternetConnected() == false){
+            if (isInternetConnected() == false){
                 updateListView();
             }
+
         }
     }
 
-    // fungsi untuk menambah data
     public void buttonAdd(View view) {
         String data = editTextInput.getText().toString();
-        if (!TextUtils.isEmpty(data)) {
-            String id = UUID.randomUUID().toString();
-            InputData inputData = new InputData(id, data, latitude, longitude, user.getEmail());
 
-            // Menjalankan operasi database local di thread terpisah
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String userId = user.getEmail();
+
+        if (!TextUtils.isEmpty(data)){
+            String id = UUID.randomUUID().toString();
+            InputData inputData = new InputData(id,data,userId,latitude,longitude);
+
             new InsertDataAsyncTask().execute(inputData);
 
-            // memasukkan data ke firebase
             databaseInputData.child(id).setValue(inputData)
                     .addOnSuccessListener(this, new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void unused) {
                             editTextInput.setText("");
-                            Toast.makeText(MainActivity.this, "Data berhasil ditambahkan", Toast.LENGTH_SHORT).show();
-                        }
-                    }).addOnFailureListener(this, new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            String error_message = e.getMessage();
-                            Log.i("Error_data", error_message);
-                            Toast.makeText(MainActivity.this, "Data gagal ditambahkan", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this,"Data berhasil ditambahkan",Toast.LENGTH_SHORT).show();
                         }
                     });
 
-            // mengirim data ke alat melalui socket jika tidak ada internet
-            if (isInternetConnected() == false) {
-                Executors.newSingleThreadExecutor().execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Socket socket = new Socket(SERVER_IP, SERVER_PORT);
-                            OutputStream outputStream = socket.getOutputStream();
-                            outputStream.write(data.getBytes());
-                            outputStream.close();
-                            socket.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
-        } else {
-            Toast.makeText(this, "Data wajib diisi", Toast.LENGTH_SHORT).show();
+        }else {
+            Toast.makeText(this,"Data wajib diisi",Toast.LENGTH_SHORT).show();
         }
     }
 
-    // fungsi untuk reset data
-    public void buttonReset(View view) {
+    public void resetDatabase(View view) {
         if (isInternetConnected() == true) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Konfirmasi Reset Data");
@@ -345,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog dialog = builder.create();
             dialog.show();
         } else {
-            // alasan tidak dapat reset data tanpa internet karena akan menimbulkan selip pada data dan menyebabkan ketidaksinkronan data firebase dengan local
+            // alasan tidak dapat reset data tanpa internet karena akan menyebabkan ketidaksinkronan data firebase dengan local
             Toast.makeText(MainActivity.this, "Tidak dapat reset data tanpa internet", Toast.LENGTH_LONG).show();
         }
     }
@@ -400,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
     public void buttonExport(View view){
         if(isInternetConnected() == true){
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M) {
-                if (getApplicationContext().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                if (getApplicationContext().checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
                     String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
                     requestPermissions(permissions, 1);
                 } else {
@@ -460,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
                 cell.setCellValue((listData.get(i).getData_Data()));
 
                 cell = row1.createCell(2);
-                cell.setCellValue((listData.get(i).getUser_email()));
+                cell.setCellValue((listData.get(i).getUserId()));
 
                 cell = row1.createCell(3);
                 cell.setCellValue((listData.get(i).getLatitude()));
@@ -507,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
+    protected void onStart(){
         super.onStart();
         if (isInternetConnected() == true) {
             databaseInputData.addValueEventListener(new ValueEventListener() {
@@ -533,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void setDataListView(List<InputData> listData) {
+    public void setDataListView(List<InputData> listData){
         Collections.sort(listData, new InputDataTimestampComparator());
         listview_inputdata inputDataList_Adapter = new listview_inputdata(MainActivity.this, listData);
         listViewData.setAdapter(inputDataList_Adapter);

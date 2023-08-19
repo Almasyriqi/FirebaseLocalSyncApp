@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="@drawable/wave">
+
 
     <TextView
         android:id="@+id/user_details"
@@ -14,18 +16,29 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginStart="83dp"
-        android:layout_marginTop="245dp"
-        android:layout_marginEnd="83dp"
-        android:text="Hello World!" />
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="27dp"
+        android:layout_marginEnd="155dp"
+        android:layout_marginRight="20dp"
+        android:text="Hello World!"
+        android:textColor="@color/white"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/logout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:layout_marginLeft="280dp"
-        android:layout_marginTop="20dp"
-        android:text="Logout" />
+        android:layout_marginTop="75dp"
+        android:layout_marginEnd="8dp"
+        android:text="Logout"
+        android:textColor="@color/black"
+        android:drawableLeft="@drawable/logout_svgrepo_com"
+        android:backgroundTint="@color/white"/>
+
 
     <Button
         android:id="@+id/buttonProfil"
@@ -34,101 +47,108 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_marginLeft="30dp"
-        android:layout_marginTop="86dp"
-        android:layout_marginEnd="38dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="5dp"
         android:paddingLeft="30dp"
         android:paddingRight="30dp"
-        android:text="Profil" />
+        android:text="Profil"
+        android:textColor="@color/black"
+        android:drawableLeft="@drawable/baseline_person_24"
+        android:backgroundTint="#FFFFFF"/>
 
-    <Button
-        android:id="@+id/buttonReset"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@id/buttonProfil"
-        android:layout_alignParentEnd="true"
-        android:layout_marginLeft="30dp"
-        android:layout_marginTop="66dp"
-        android:layout_marginEnd="34dp"
-        android:paddingLeft="30dp"
-        android:paddingRight="30dp"
-        android:onClick="buttonReset"
-        android:text="Reset" />
-
-    <Button
-        android:id="@+id/buttonSync"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@id/buttonProfil"
-        android:layout_alignParentEnd="true"
-        android:layout_marginLeft="30dp"
-        android:layout_marginTop="66dp"
-        android:layout_marginEnd="152dp"
-        android:onClick="buttonSync"
-        android:paddingLeft="30dp"
-        android:paddingRight="30dp"
-        android:text="Sync" />
-
-    <Button
-        android:id="@+id/buttonExport"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@id/buttonInput"
-        android:layout_alignParentEnd="true"
-        android:layout_marginLeft="30dp"
-        android:layout_marginTop="54dp"
-        android:layout_marginEnd="281dp"
-        android:onClick="buttonExport"
-        android:paddingLeft="30dp"
-        android:paddingRight="30dp"
-        android:text="Export" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-            android:layout_marginTop="50dp">
+            android:layout_marginTop="200dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editTextInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:layout_marginTop="200dp"
-                android:inputType="number"
-                android:hint="EditText" />
+                android:layout_marginLeft="50dp"
+                android:layout_marginTop="300dp"
+                android:hint="Enter"
+                android:inputType="number"/>
         </com.google.android.material.textfield.TextInputLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#03A9F4"
+        android:layout_marginTop="275dp"/>
+
+
+        <Button
+        android:id="@+id/buttonInput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="220dp"
+        android:layout_marginTop="210dp"
+        android:onClick="buttonAdd"
+        android:text="Submit"
+            android:backgroundTint="#068F0C"/>
 
 
     <TextView
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="43dp"
+        android:layout_marginStart="70dp"
         android:layout_marginLeft="20dp"
-        android:layout_marginTop="24dp"
-        android:text="Menu Input Data"
-        android:textStyle="bold"
-        android:textSize="20sp"/>
-
-    <Button
-        android:id="@+id/buttonInput"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="30dp"
-        android:layout_marginTop="120dp"
-        android:onClick="buttonAdd"
-        android:text="Submit" />
+        android:layout_marginTop="169dp"
+        android:text="Input Data"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <ListView
         android:id="@+id/listView_Data"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/buttonInput"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="119dp"
-        android:layout_marginEnd="20dp" />
+        android:layout_marginStart="3dp"
+        android:layout_marginTop="390dp"
+        android:layout_marginEnd="-2dp"
+        android:divider="@color/black"
+        android:dividerHeight="1dp"/>
+
+    <Button
+        android:id="@+id/buttonReset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/buttonInput"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="58dp"
+        android:onClick="resetDatabase"
+        android:text="Reset"
+        android:backgroundTint="#E91E63"/>
+
+    <Button
+        android:id="@+id/buttonSync"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="315dp"
+        android:layout_marginEnd="180dp"
+        android:onClick="buttonSync"
+        android:text="Sync"
+        android:backgroundTint="#2196F3"/>
+
+    <Button
+        android:id="@+id/buttonExport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/buttonSync"
+        android:layout_marginStart="120dp"
+        android:layout_marginTop="315dp"
+        android:layout_marginEnd="50dp"
+        android:backgroundTint="#068F0C"
+        android:onClick="buttonExport"
+        android:text="Export" />
 
 </RelativeLayout>
 

@@ -5,39 +5,46 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.google.firebase.database.ServerValue;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-@Entity(tableName = "cable")
+
+@Entity(tableName = "datacable")
 public class InputData {
     @PrimaryKey(autoGenerate = false)
     @NonNull
     private String data_Id;
-    @ColumnInfo(name = "data")
+    @ColumnInfo(name = "datacable")
     private String data_Data;
+    @ColumnInfo(name = "user")
+    private String userId;
     @ColumnInfo(name = "timestamp")
     private long timestamp;
+
     @ColumnInfo(name = "latitude")
     private double latitude;
     @ColumnInfo(name = "longitude")
     private double longitude;
-    @ColumnInfo(name = "user_email")
-    private String user_email;
+
+
 
     public InputData(){
 
     }
-    public InputData(String dataId, String dataData, double latitude, double longitude, String email){
+    public InputData(String dataId, String dataData, String userId,double latitude, double longitude){
         this.data_Id = dataId;
         this.data_Data = dataData;
-        this.timestamp = System.currentTimeMillis();
+        this.userId = userId;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.user_email = email;
+        this.timestamp = System.currentTimeMillis();
+
     }
 
-    public void setData_Id(String data_Id) {
+    public void setData_Id(@NonNull String data_Id) {
         this.data_Id = data_Id;
     }
 
@@ -45,32 +52,28 @@ public class InputData {
         this.data_Data = data_Data;
     }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public double getLatitude() {
+        return latitude;
     }
 
     public void setLatitude(double latitude) {
         this.latitude = latitude;
     }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public void setUser_email(String user_email) {
-        this.user_email = user_email;
-    }
-
-    public String getUser_email() {
-        return user_email;
-    }
-
     public double getLongitude() {
         return longitude;
     }
 
-    public double getLatitude() {
-        return latitude;
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     public String getData_Id() {
@@ -80,13 +83,16 @@ public class InputData {
     public String getData_Data() {
         return data_Data;
     }
-    public long getTimestamp(){
-        return timestamp;
+    public long getTimestamp(){ return timestamp; }
+    public String getUserId() {
+        return userId;
     }
 
     public String getFormattedTimestamp(){
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy HH:mm:ss", Locale.getDefault());
         return  dateFormat.format(new Date(timestamp));
     }
+
+
 }
 

@@ -9,33 +9,41 @@
         android:id="@+id/textViewMeter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="1 meter"
+        android:gravity=""
+        android:layout_marginLeft="20dp"
         android:layout_marginTop="10dp"
-        android:textSize="16sp"
-        android:text="1 meter"/>
-    <TextView
-        android:id="@+id/textViewLatitude"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="Latitude : "/>
-    <TextView
-        android:id="@+id/textViewLongitude"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="Longitude : "/>
-    <TextView
-        android:id="@+id/textViewEmail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:text="User : "/>
+        />
     <TextView
         android:id="@+id/textViewWaktu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:layout_marginBottom="10dp"
-        android:text="15 Agu 2023 14:27:02" />
+        android:text="15 Agu 2023 14:27:02"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"/>
+    <TextView
+        android:id="@+id/textViewEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="insyagi@gmail.com"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"/>
+    <TextView
+        android:id="@+id/textViewLatitude"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Latitude : "
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:id="@+id/textViewLongitude"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Longitude : "
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"/>
+
 
 </LinearLayout>

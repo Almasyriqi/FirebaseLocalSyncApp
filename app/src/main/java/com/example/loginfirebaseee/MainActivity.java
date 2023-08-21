@@ -5,6 +5,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import android.os.Handler;
+import android.os.Looper;
 
 import android.Manifest;
 import android.content.Context;
@@ -47,6 +49,11 @@ import org.apache.poi.ss.usermodel.Workbook;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,11 +64,15 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText editTextInput;
     private DatabaseReference databaseInputData;
+    private DatabaseReference databaseControl;
     private ListView listViewData;
     private List<InputData> listData;
     private LocationManager locationManager;
     private LocationListener locationListener;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final String SERVER_IP = "192.168.43.39"; // Ganti dengan alamat IP server
+    private static final int SERVER_PORT = 12345;
+    private Handler delayHandler = new Handler(Looper.getMainLooper());
 
     AppDatabase databaseLocal;
     DataDao dataDao;
@@ -69,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     List<InputData> temporaryLocal;
 
     double latitude, longitude;
+    int lock = 0;
     FirebaseAuth auth;
     Button button, buttonProfil, buttonReset;
     TextView textView;
@@ -102,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
         //memanggil instansi dari firebase dan dimasukkan ke variabel Data
         databaseInputData = FirebaseDatabase.getInstance().getReference("Data");
+        databaseControl = FirebaseDatabase.getInstance().getReference("Control");
 
         // get current user firebase
         auth = FirebaseAuth.getInstance();
@@ -263,17 +276,51 @@ public class MainActivity extends AppCompatActivity {
             String id = UUID.randomUUID().toString();
             InputData inputData = new InputData(id,data,userId,latitude,longitude);
 
-            new InsertDataAsyncTask().execute(inputData);
+            if(lock == 0){
+                new InsertDataAsyncTask().execute(inputData);
 
-            databaseInputData.child(id).setValue(inputData)
-                    .addOnSuccessListener(this, new OnSuccessListener<Void>() {
+                databaseInputData.child(id).setValue(inputData)
+                        .addOnSuccessListener(this, new OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void unused) {
+                                editTextInput.setText("");
+                                Toast.makeText(MainActivity.this,"Data berhasil ditambahkan",Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                // mengirim data ke alat melalui socket jika tidak ada internet
+                if (isInternetConnected() == false) {
+                    Executors.newSingleThreadExecutor().execute(new Runnable() {
                         @Override
-                        public void onSuccess(Void unused) {
-                            editTextInput.setText("");
-                            Toast.makeText(MainActivity.this,"Data berhasil ditambahkan",Toast.LENGTH_SHORT).show();
+                        public void run() {
+                            try {
+                                Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+                                OutputStream outputStream = socket.getOutputStream();
+                                Log.i("SOCKET", "Mencoba kirim data");
+                                String send_data = data + "\n";
+                                outputStream.write(send_data.getBytes());
+                                outputStream.close();
+                                Log.i("SOCKET", "BERHASIL KIRIM DATA");
+                                lock = 1;
+                                socket.close();
+                                int delay_time = Integer.parseInt(data) * 5000;
+                                delayHandler.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        lock = 0;
+                                    }
+                                }, delay_time);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
-
+                } else {
+                    databaseControl.child("data").setValue(Integer.parseInt(data));
+                }
+            } else {
+                Toast.makeText(this,"Tidak dapat menambah data karena alat masih berjalan",Toast.LENGTH_SHORT).show();
+            }
         }else {
             Toast.makeText(this,"Data wajib diisi",Toast.LENGTH_SHORT).show();
         }
@@ -493,6 +540,17 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                     Log.i("DB_ERR", error.getMessage());
+                }
+            });
+            databaseControl.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    lock = snapshot.child("lock").getValue(Integer.class);
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
                 }
             });
         } else {
